@@ -31,9 +31,14 @@ public class CalculatorController {
         }
     }
 
-    /*@PostMapping("/calc")
+    @PostMapping("/calc")
     CreditDto creditCalculation(@Validated @RequestBody ScoringDataDto scoringDataDto){
-
-    }*/
+        try {
+            scoringService.score(scoringDataDto);
+        } catch (IllegalArgumentException iae){
+            return new CreditDto();
+        }
+        return new CreditDto(); //TODO:calculate
+    }
 
 }

@@ -1,12 +1,19 @@
 package com.example.calculator.service;
 
 import com.example.calculator.dto.LoanStatementRequestDto;
+import com.example.calculator.dto.ScoringDataDto;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Period;
+
+import static com.example.calculator.enums.EmploymentStatusEnum.*;
+import static com.example.calculator.enums.GendersEnum.FEMALE;
+import static com.example.calculator.enums.GendersEnum.MALE;
+import static com.example.calculator.enums.MaritalStatusEnum.*;
+import static com.example.calculator.enums.PositionsEnum.*;
 
 @Service
 public class ScoringService {
@@ -51,14 +58,77 @@ public class ScoringService {
         return true;
     }
 
-    public BigDecimal calculateTotalAmount(BigDecimal amount,
-                                           boolean isInsuranceEnabled,
-                                           boolean isSalaryClient){
+    public BigDecimal score(ScoringDataDto scoringDataDto){
+        BigDecimal rate = baseRate;
+        if (scoringDataDto.getEmployment().getSalary().multiply(new BigDecimal(25)).compareTo(scoringDataDto.getAmount()) < 0){
+            throw new IllegalArgumentException("You can't take more money then your 25 salaries");
+        }
+        if (scoringDataDto.getEmployment().getWorkExperienceTotal() < 18)
+            throw new IllegalArgumentException("You need more total experience");
+        if (scoringDataDto.getEmployment().getWorkExperienceCurrent() < 3)
+            throw new IllegalArgumentException("You need more experience on your current work");
 
-        return isInsuranceEnabled&(!isSalaryClient) ? amount.add(new BigDecimal("100000")):amount;
+        if (scoringDataDto.getEmployment().getEmploymentStatus().equals(UNEMPLOYED)) {
+            throw new IllegalArgumentException("You can't take a credit with status \"unemployed\"");
+        } else if (scoringDataDto.getEmployment().getEmploymentStatus().equals(SELF_EMPLOYEE)) {
+            rate = rate.add(new BigDecimal(1));
+        } else if (scoringDataDto.getEmployment().getEmploymentStatus().equals(BUSINESSOWNER)) {
+            rate = rate.add(new BigDecimal(2));
+        }
+
+        if (scoringDataDto.getEmployment().getPosition().equals(SENIORSTAFF))
+            rate = rate.subtract(new BigDecimal(1));
+        else if (scoringDataDto.getEmployment().getPosition().equals(MIDDLEMANAGER))
+            rate = rate.subtract(new BigDecimal(2));
+        else if (scoringDataDto.getEmployment().getPosition().equals(TOPMANAGER))
+            rate = rate.subtract(new BigDecimal(3));
+
+        if (scoringDataDto.getMaritalStatus().equals(MARRIED))
+            rate = rate.subtract(new BigDecimal(3));
+        else if (scoringDataDto.getMaritalStatus().equals(WIDOWED))
+            rate = rate.subtract(new BigDecimal(1));
+        else if (scoringDataDto.getMaritalStatus().equals(DIVORCED))
+            rate = rate.add(new BigDecimal(1));
+        int age = Period.between(scoringDataDto.getBirthdate(), LocalDate.now()).getYears();
+        if (age < 20 || age > 65) {
+            throw new IllegalArgumentException("Your age must be more then 20");
+        }
+        if (scoringDataDto.getGender().equals(FEMALE)){
+            if (age < 32 || age > 60) {
+                rate = rate.subtract(new BigDecimal(3));
+            }
+        } else if (scoringDataDto.getGender().equals(MALE)) {
+            if (age < 30 || age > 55)
+                rate = rate.subtract(new BigDecimal(3));
+        } else {
+            rate = rate.add(new BigDecimal(7));
+        }
+        return rate;
     }
 
-    public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient){
+    /**
+     * Method for calculating amount of money, which bank ready to give a client
+     *
+     * @param amount             - required amount
+     * @param isInsuranceEnabled - include insurance in amount or not
+     * @param isSalaryClient     - if client has status "salary client", he doesn't need to pay for insurance
+     * @return total amount
+     */
+    public BigDecimal calculateTotalAmount(BigDecimal amount,
+                                           boolean isInsuranceEnabled,
+                                           boolean isSalaryClient) {
+
+        return isInsuranceEnabled & (!isSalaryClient) ? amount.add(new BigDecimal("100000")) : amount;
+    }
+
+    /**
+     * Method for calculating bank rate, using based rate
+     *
+     * @param isInsuranceEnabled - include insurance in credit or not
+     * @param isSalaryClient     - client has status "salary client" or not
+     * @return current bank rate
+     */
+    public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
         BigDecimal totalRate = baseRate;
         if (isInsuranceEnabled) {
             totalRate = totalRate.subtract(new BigDecimal("3.00"));
@@ -69,15 +139,25 @@ public class ScoringService {
         return totalRate;
     }
 
-    public BigDecimal calculateMonthlyPayment(BigDecimal amount, BigDecimal rate, Integer term){
+    /**
+     * Method for calculating credit montly payment
+     *
+     * @param amount - total amount of credit money
+     * @param rate   - bank rate
+     * @param term   - term of credit
+     * @return monthly payment
+     */
+    public BigDecimal calculateMonthlyPayment(BigDecimal amount, BigDecimal rate, Integer term) {
         BigDecimal monthlyPayment = amount;
         BigDecimal numerator = rate.multiply(rate.add(new BigDecimal(1).pow(term)));
         BigDecimal denominator = rate.add(new BigDecimal(1)).pow(term).subtract(new BigDecimal(1));
         monthlyPayment = monthlyPayment.multiply(numerator.divide(denominator));
         return monthlyPayment.setScale(2, RoundingMode.HALF_EVEN);
     }
+
     /**
-     * Function for checking string on letters
+     * Method for checking string on letters
+     *
      * @param word - checking word
      * @return true, if word contains only letters, or false, if not
      */
