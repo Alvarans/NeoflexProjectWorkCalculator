@@ -104,8 +104,8 @@ public class CalculatorService {
         paymentScheduleElementDto.setNumber(number);
         paymentScheduleElementDto.setTotalPayment(amount);
         //Считаем ежемесячную ставку
-        BigDecimal monthlyRate = rate.divide(new BigDecimal(12)).
-                divide(new BigDecimal(100));
+        BigDecimal monthlyRate = rate.divide(new BigDecimal(12), 4, RoundingMode.HALF_EVEN).
+                divide(new BigDecimal(100), 4, RoundingMode.HALF_EVEN);
         //Считаем платёж к банку
         BigDecimal interestPayment = amount.multiply(monthlyRate);
         //Считаем платёж по долгу

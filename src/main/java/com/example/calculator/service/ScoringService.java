@@ -162,10 +162,13 @@ public class ScoringService {
      */
     public BigDecimal calculateMonthlyPayment(BigDecimal amount, BigDecimal rate, Integer term) {
         BigDecimal monthlyPayment = amount;
-        BigDecimal numerator = rate.multiply(rate.add(new BigDecimal(1).pow(term)));
-        BigDecimal denominator = rate.add(new BigDecimal(1)).pow(term).subtract(new BigDecimal(1));
-        monthlyPayment = monthlyPayment.multiply(numerator.divide(denominator));
-        return monthlyPayment.setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal monthlyRate = rate.divide(new BigDecimal(12),12,RoundingMode.HALF_EVEN)
+                .divide(new BigDecimal(100),12,RoundingMode.HALF_EVEN);
+        BigDecimal numerator = monthlyRate.multiply(monthlyRate.add(new BigDecimal(1)).pow(term));
+        BigDecimal denominator = monthlyRate.add(new BigDecimal(1)).pow(term);
+        denominator = denominator.subtract(new BigDecimal(1));
+        monthlyPayment = monthlyPayment.multiply(numerator.divide(denominator, 2, RoundingMode.HALF_EVEN));
+        return monthlyPayment;
     }
 
     /**
@@ -186,6 +189,6 @@ public class ScoringService {
      * @return true, if word contains only letters, or false, if not
      */
     private boolean isLatina(String word) {
-        return word.matches("\\\\w+");
+        return word.matches("^[A-Za-z]+$");
     }
 }
