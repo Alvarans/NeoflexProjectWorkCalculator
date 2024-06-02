@@ -1,8 +1,14 @@
 package com.example.calculator.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+
 public enum EmploymentStatusEnum {
-    BUSINESSOWNER,
-    EMPLOYEE,
-    UNEMPLOYED,
-    SELF_EMPLOYEE
+    @JsonProperty BUSINESSOWNER,
+    @JsonProperty EMPLOYEE,
+    @JsonProperty UNEMPLOYED,
+    @JsonProperty SELF_EMPLOYEE;
+
+    EmploymentStatusEnum() {
+    }
 }

@@ -6,6 +6,7 @@ import com.example.calculator.dto.LoanStatementRequestDto;
 import com.example.calculator.dto.ScoringDataDto;
 import com.example.calculator.service.CalculatorService;
 import com.example.calculator.service.ScoringService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -50,7 +51,7 @@ public class CalculatorController {
      * @return filled credit offer with monthly payment schedule. If request information can't pass score - return empty credit offer
      */
     @PostMapping("/calc")
-    CreditDto creditCalculation(@Validated @RequestBody ScoringDataDto scoringDataDto) {
+    CreditDto creditCalculation(@Valid @RequestBody ScoringDataDto scoringDataDto) {
         try {
             BigDecimal scoreRate = scoringService.score(scoringDataDto);
             return calculatorService.createCredit(scoringDataDto, scoreRate);
@@ -61,6 +62,7 @@ public class CalculatorController {
 
     /**
      * Method, who handle ArgumentNotValidException exception
+     *
      * @param ex - body of exception
      * @return map of errors, contains naming of field, failed validation, and default message
      */

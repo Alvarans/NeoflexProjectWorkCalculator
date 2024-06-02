@@ -161,13 +161,15 @@ public class ScoringService {
      * @return monthly payment
      */
     public BigDecimal calculateMonthlyPayment(BigDecimal amount, BigDecimal rate, Integer term) {
+        //Локальная переменная с суммой кредита
         BigDecimal monthlyPayment = amount;
-        BigDecimal monthlyRate = rate.divide(new BigDecimal(12),12,RoundingMode.HALF_EVEN)
-                .divide(new BigDecimal(100),12,RoundingMode.HALF_EVEN);
+        BigDecimal monthlyRate = rate.divide(new BigDecimal(12), 20, RoundingMode.HALF_EVEN)
+                .divide(new BigDecimal(100), 20, RoundingMode.HALF_EVEN);
         BigDecimal numerator = monthlyRate.multiply(monthlyRate.add(new BigDecimal(1)).pow(term));
         BigDecimal denominator = monthlyRate.add(new BigDecimal(1)).pow(term);
         denominator = denominator.subtract(new BigDecimal(1));
-        monthlyPayment = monthlyPayment.multiply(numerator.divide(denominator, 2, RoundingMode.HALF_EVEN));
+        BigDecimal multiplier = numerator.divide(denominator, 20, RoundingMode.HALF_EVEN);
+        monthlyPayment = monthlyPayment.multiply(multiplier);
         return monthlyPayment;
     }
 

@@ -4,5 +4,8 @@ public enum PositionsEnum {
     TOPMANAGER,
     MIDDLEMANAGER,
     SENIORSTAFF,
-    REGULARSTAFF
+    REGULARSTAFF;
+
+    PositionsEnum() {
+    }
 }

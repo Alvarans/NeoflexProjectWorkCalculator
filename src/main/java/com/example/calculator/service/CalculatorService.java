@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -48,7 +50,7 @@ public class CalculatorService {
                 requestDto.getAmount(),
                 totalAmount,
                 requestDto.getTerm(),
-                monthlyPayment,
+                monthlyPayment.setScale(2, RoundingMode.HALF_EVEN),
                 rate,
                 isInsuranceEnable,
                 isSalaryClient);
@@ -102,10 +104,9 @@ public class CalculatorService {
         PaymentScheduleElementDto paymentScheduleElementDto = new PaymentScheduleElementDto();
         //Устанавливаем значение номера и суммы остатка
         paymentScheduleElementDto.setNumber(number);
-        paymentScheduleElementDto.setTotalPayment(amount);
         //Считаем ежемесячную ставку
-        BigDecimal monthlyRate = rate.divide(new BigDecimal(12), 4, RoundingMode.HALF_EVEN).
-                divide(new BigDecimal(100), 4, RoundingMode.HALF_EVEN);
+        BigDecimal monthlyRate = rate.divide(new BigDecimal(12), 20, RoundingMode.HALF_EVEN).
+                divide(new BigDecimal(100), 20, RoundingMode.HALF_EVEN);
         //Считаем платёж к банку
         BigDecimal interestPayment = amount.multiply(monthlyRate);
         //Считаем платёж по долгу
@@ -113,17 +114,21 @@ public class CalculatorService {
         //Считаем оставшийся долг
         BigDecimal remainingDebt = amount.subtract(debtPayment);
         //Заносим данные в наш объект
+        paymentScheduleElementDto.setTotalPayment(monthlyPayment);
         paymentScheduleElementDto.setInterestPayment(interestPayment.setScale(2, RoundingMode.HALF_EVEN));
-        paymentScheduleElementDto.setDebtPayment(debtPayment.setScale(2, RoundingMode.HALF_EVEN));
+        paymentScheduleElementDto.setDebtPayment(debtPayment.setScale(2, RoundingMode.HALF_UP));
         paymentScheduleElementDto.setRemainingDebt(remainingDebt.setScale(2, RoundingMode.HALF_EVEN));
+        //Устанавливаем дату платежа
+        LocalDate today = LocalDate.now();
+        paymentScheduleElementDto.setDate(today.plusMonths(number - 1));
         //Создаём лист платежей для записи в него
         List<PaymentScheduleElementDto> paymentSchedule;
         //Пока у нас есть долг по кредиту - уходим в рекурсию с остатком по платежу. Иначе - формируем список с последним платежом
-        if (remainingDebt.compareTo(BigDecimal.ZERO) != 0) {
+        if ((remainingDebt.compareTo(BigDecimal.ZERO) > 0) && (remainingDebt.compareTo(BigDecimal.ONE) > 0)) {
             paymentSchedule = createPaymentSchedule(++number, remainingDebt, rate, monthlyPayment);
-            paymentSchedule.add(--number, paymentScheduleElementDto);
+            paymentSchedule.add(paymentScheduleElementDto);
         } else {
-            return List.of(paymentScheduleElementDto);
+            return new ArrayList<>(List.of(paymentScheduleElementDto));
         }
         //Возвращаем сформированный график платежей
         return paymentSchedule;
