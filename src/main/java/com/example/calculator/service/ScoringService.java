@@ -65,15 +65,18 @@ public class ScoringService {
      * @return adding rate for credit if all right. Otherwise, it throws Illegal Argument Exception
      */
     public BigDecimal score(ScoringDataDto scoringDataDto) {
+        //Дополнительная ставка, формирующаяся на основе скоринга
         BigDecimal rate = new BigDecimal(0);
+        //Проверка на превышение запроса на кредит 25 ставок клиента
         if (scoringDataDto.getEmployment().getSalary().multiply(new BigDecimal(25)).compareTo(scoringDataDto.getAmount()) < 0) {
             throw new IllegalArgumentException("You can't take more money then your 25 salaries");
         }
+        //Проверка на общий и текущий стаж клиента
         if (scoringDataDto.getEmployment().getWorkExperienceTotal() < 18)
             throw new IllegalArgumentException("You need more total experience");
         if (scoringDataDto.getEmployment().getWorkExperienceCurrent() < 3)
             throw new IllegalArgumentException("You need more experience on your current work");
-
+        //Проверка статуса занятости клиента. Если клиент безработный - отказать в кредите. Иначе - увеличить добавочную ставку
         if (scoringDataDto.getEmployment().getEmploymentStatus().equals(UNEMPLOYED)) {
             throw new IllegalArgumentException("You can't take a credit with status \"unemployed\"");
         } else if (scoringDataDto.getEmployment().getEmploymentStatus().equals(SELF_EMPLOYEE)) {
@@ -81,24 +84,27 @@ public class ScoringService {
         } else if (scoringDataDto.getEmployment().getEmploymentStatus().equals(BUSINESSOWNER)) {
             rate = rate.add(new BigDecimal(2));
         }
-
+        //Проверка должности клиента. В зависимости от неё уменьшается добавочная ставка по кредиту
         if (scoringDataDto.getEmployment().getPosition().equals(SENIORSTAFF))
             rate = rate.subtract(new BigDecimal(1));
         else if (scoringDataDto.getEmployment().getPosition().equals(MIDDLEMANAGER))
             rate = rate.subtract(new BigDecimal(2));
         else if (scoringDataDto.getEmployment().getPosition().equals(TOPMANAGER))
             rate = rate.subtract(new BigDecimal(3));
-
+        //Проверка семейного статуса клиента. В зависимости от него ставка как увеличивается, так и уменьшается
         if (scoringDataDto.getMaritalStatus().equals(MARRIED))
             rate = rate.subtract(new BigDecimal(3));
         else if (scoringDataDto.getMaritalStatus().equals(WIDOWED))
             rate = rate.subtract(new BigDecimal(1));
         else if (scoringDataDto.getMaritalStatus().equals(DIVORCED))
             rate = rate.add(new BigDecimal(1));
+        //Возраст клиента
         int age = Period.between(scoringDataDto.getBirthdate(), LocalDate.now()).getYears();
+        //Если возраст клиента не соответствует политике банка, отказать в кредите
         if (age < 20 || age > 65) {
-            throw new IllegalArgumentException("Your age must be more then 20");
+            throw new IllegalArgumentException("Your age must be more then 20 or less then 65");
         }
+        //Увеличение и уменьшение ставки на основе идентификации и возраста клиента
         if (scoringDataDto.getGender().equals(FEMALE)) {
             if (age < 32 || age > 60) {
                 rate = rate.subtract(new BigDecimal(3));
@@ -109,6 +115,7 @@ public class ScoringService {
         } else {
             rate = rate.add(new BigDecimal(7));
         }
+        //Возвращаем сформированную добавочную ставку
         return rate;
     }
 
@@ -161,6 +168,13 @@ public class ScoringService {
         return monthlyPayment.setScale(2, RoundingMode.HALF_EVEN);
     }
 
+    /**
+     * Method for calculating total payment amount
+     *
+     * @param monthlyPayment - monthly payment for credit
+     * @param term           - term of credit
+     * @return total payment amount
+     */
     public BigDecimal calculatePSK(BigDecimal monthlyPayment, Integer term) {
         return monthlyPayment.multiply(new BigDecimal(term));
     }

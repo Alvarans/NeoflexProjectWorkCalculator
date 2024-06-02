@@ -54,15 +54,28 @@ public class CalculatorService {
                 isSalaryClient);
     }
 
+    /**
+     * Method for creating credit
+     *
+     * @param scoringDataDto - information about client and requested credit
+     * @param scoredRate     - additional rate, calculated in scoring
+     * @return credit with monthly payment schedule
+     */
     public CreditDto createCredit(ScoringDataDto scoringDataDto, BigDecimal scoredRate) {
+        //Считаем общую сумму по кредиту с учётом взятия страховки и статуса "зарплатного клиента"
         BigDecimal totalAmount = scoringService.calculateTotalAmount(scoringDataDto.getAmount(),
                 scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient());
+        //Считаем банковскую ставку с учётом взятия страховки и статуса "зарплатного клиента"
         BigDecimal rate = scoringService.calculateRate(scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient());
+        //Добавляем к ставке добавочную ставку, расчитанную в скоринге
         rate = rate.add(scoredRate);
+        //Считаем ежемесячный платёж клиента по аннуитентному типу платежей
         BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, scoringDataDto.getTerm());
+        //Считаем полную стоимость кредита
         BigDecimal psk = scoringService.calculatePSK(monthlyPayment, scoringDataDto.getTerm());
+        //Формируем кредитное предложение
         return new CreditDto(totalAmount,
                 scoringDataDto.getTerm(),
                 monthlyPayment,
@@ -70,31 +83,49 @@ public class CalculatorService {
                 psk,
                 scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient(),
-                createPaymentSchedule(1, totalAmount, rate, monthlyPayment));
+                createPaymentSchedule(1, totalAmount, rate, monthlyPayment)); //Формируем и добавляем график ежемесячных платежей
     }
 
+    /**
+     * Method for creating monthly payment schedule
+     *
+     * @param number         - number of payment in schedule
+     * @param amount         - remaining payment amount
+     * @param rate           - credit rate
+     * @param monthlyPayment - monthly payment
+     * @return payment schedule
+     */
     private List<PaymentScheduleElementDto> createPaymentSchedule(Integer number, BigDecimal amount,
                                                                   BigDecimal rate,
                                                                   BigDecimal monthlyPayment) {
+        //Создаём объект платежа
         PaymentScheduleElementDto paymentScheduleElementDto = new PaymentScheduleElementDto();
+        //Устанавливаем значение номера и суммы остатка
         paymentScheduleElementDto.setNumber(number);
         paymentScheduleElementDto.setTotalPayment(amount);
+        //Считаем ежемесячную ставку
         BigDecimal monthlyRate = rate.divide(new BigDecimal(12)).
                 divide(new BigDecimal(100));
+        //Считаем платёж к банку
         BigDecimal interestPayment = amount.multiply(monthlyRate);
+        //Считаем платёж по долгу
         BigDecimal debtPayment = monthlyPayment.subtract(interestPayment);
+        //Считаем оставшийся долг
         BigDecimal remainingDebt = amount.subtract(debtPayment);
-        BigDecimal newAmount = amount.subtract(debtPayment);
+        //Заносим данные в наш объект
         paymentScheduleElementDto.setInterestPayment(interestPayment.setScale(2, RoundingMode.HALF_EVEN));
         paymentScheduleElementDto.setDebtPayment(debtPayment.setScale(2, RoundingMode.HALF_EVEN));
         paymentScheduleElementDto.setRemainingDebt(remainingDebt.setScale(2, RoundingMode.HALF_EVEN));
+        //Создаём лист платежей для записи в него
         List<PaymentScheduleElementDto> paymentSchedule;
-        if (newAmount.compareTo(BigDecimal.ZERO) != 0) {
-            paymentSchedule = createPaymentSchedule(++number, newAmount, rate, monthlyPayment);
+        //Пока у нас есть долг по кредиту - уходим в рекурсию с остатком по платежу. Иначе - формируем список с последним платежом
+        if (remainingDebt.compareTo(BigDecimal.ZERO) != 0) {
+            paymentSchedule = createPaymentSchedule(++number, remainingDebt, rate, monthlyPayment);
             paymentSchedule.add(--number, paymentScheduleElementDto);
         } else {
             return List.of(paymentScheduleElementDto);
         }
+        //Возвращаем сформированный график платежей
         return paymentSchedule;
     }
 }
