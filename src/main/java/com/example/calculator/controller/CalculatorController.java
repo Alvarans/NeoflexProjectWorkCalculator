@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -34,11 +35,11 @@ public class CalculatorController {
     @PostMapping("/calc")
     CreditDto creditCalculation(@Validated @RequestBody ScoringDataDto scoringDataDto){
         try {
-            scoringService.score(scoringDataDto);
+            BigDecimal scoreRate = scoringService.score(scoringDataDto);
+            return calculatorService.createCredit(scoringDataDto, scoreRate);
         } catch (IllegalArgumentException iae){
             return new CreditDto();
         }
-        return new CreditDto(); //TODO:calculate
     }
 
 }
