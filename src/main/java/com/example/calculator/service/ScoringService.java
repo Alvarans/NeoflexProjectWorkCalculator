@@ -2,6 +2,7 @@ package com.example.calculator.service;
 
 import com.example.calculator.dto.LoanStatementRequestDto;
 import com.example.calculator.dto.ScoringDataDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import static com.example.calculator.enums.MaritalStatusEnum.*;
 import static com.example.calculator.enums.PositionsEnum.*;
 
 @Service
+@Slf4j
 public class ScoringService {
     final BigDecimal baseRate = new BigDecimal("16.00");
 
@@ -28,33 +30,33 @@ public class ScoringService {
     public boolean prescore(LoanStatementRequestDto requestDto) {
         //Проверка на то, состоит ли имя из латинских символов или нет
         if (!(isLatina(requestDto.getFirstName()))) {
-            System.out.println("You must use letters in first name");
+            log.error("You must use letters in first name");
             return false;
         }
         //Проверка на то, состоит ли фамилия из латинских символов или нет
         if (!(isLatina(requestDto.getLastName()))) {
-            System.out.println("You must use letters in last name");
+            log.error("You must use letters in last name");
             return false;
         }
         String middleName = requestDto.getMiddleName();
         //Проверка отчества на длину и содержание латинских букв при его наличии
         if (middleName != null) {
             if ((middleName.length() < 2) || (middleName.length() > 30)) {
-                System.out.println("Your middlename is uncorrect");
+                log.error("Your middlename is uncorrect");
                 return false;
             }
             if (!(isLatina(requestDto.getMiddleName()))) {
-                System.out.println("You must use letters in middle name");
+                log.error("You must use letters in middle name");
                 return false;
             }
         }
         //Проверка клиента на совершеннолетие
         if (Period.between(requestDto.getBirthdate(), LocalDate.now())
                 .getYears() < 18) {
-            System.out.println("Your age must be more then 18");
+            log.error("Your age must be more then 18");
             return false;
         }
-        System.out.println("Prescore success");
+        log.info("Prescore success");
         return true;
     }
 
@@ -81,23 +83,37 @@ public class ScoringService {
             throw new IllegalArgumentException("You can't take a credit with status \"unemployed\"");
         } else if (scoringDataDto.getEmployment().getEmploymentStatus().equals(SELF_EMPLOYEE)) {
             rate = rate.add(new BigDecimal(1));
+            log.info("Rate added because of status +1. Current rate - " + rate);
         } else if (scoringDataDto.getEmployment().getEmploymentStatus().equals(BUSINESSOWNER)) {
             rate = rate.add(new BigDecimal(2));
+            log.info("Rate added because of status +2. Current rate - " + rate);
         }
         //Проверка должности клиента. В зависимости от неё уменьшается добавочная ставка по кредиту
-        if (scoringDataDto.getEmployment().getPosition().equals(SENIORSTAFF))
+        if (scoringDataDto.getEmployment().getPosition().equals(SENIORSTAFF)) {
             rate = rate.subtract(new BigDecimal(1));
-        else if (scoringDataDto.getEmployment().getPosition().equals(MIDDLEMANAGER))
+            log.info("Rate subtracted because of position -1. Current rate - " + rate);
+        }
+        else if (scoringDataDto.getEmployment().getPosition().equals(MIDDLEMANAGER)) {
             rate = rate.subtract(new BigDecimal(2));
-        else if (scoringDataDto.getEmployment().getPosition().equals(TOPMANAGER))
+            log.info("Rate subtracted because of position -2. Current rate - " + rate);
+        }
+        else if (scoringDataDto.getEmployment().getPosition().equals(TOPMANAGER)) {
             rate = rate.subtract(new BigDecimal(3));
+            log.info("Rate subtracted because of position -3. Current rate - " + rate);
+        }
         //Проверка семейного статуса клиента. В зависимости от него ставка как увеличивается, так и уменьшается
-        if (scoringDataDto.getMaritalStatus().equals(MARRIED))
+        if (scoringDataDto.getMaritalStatus().equals(MARRIED)) {
             rate = rate.subtract(new BigDecimal(3));
-        else if (scoringDataDto.getMaritalStatus().equals(WIDOWED))
+            log.info("Rate subtracted because of marinal status -3. Current rate - " + rate);
+        }
+        else if (scoringDataDto.getMaritalStatus().equals(WIDOWED)) {
             rate = rate.subtract(new BigDecimal(1));
-        else if (scoringDataDto.getMaritalStatus().equals(DIVORCED))
+            log.info("Rate subtracted because of marinal status -1. Current rate - " + rate);
+        }
+        else if (scoringDataDto.getMaritalStatus().equals(DIVORCED)) {
             rate = rate.add(new BigDecimal(1));
+            log.info("Rate added because of marinal status +1. Current rate - " + rate);
+        }
         //Возраст клиента
         int age = Period.between(scoringDataDto.getBirthdate(), LocalDate.now()).getYears();
         //Если возраст клиента не соответствует политике банка, отказать в кредите
@@ -108,12 +124,16 @@ public class ScoringService {
         if (scoringDataDto.getGender().equals(FEMALE)) {
             if (age < 32 || age > 60) {
                 rate = rate.subtract(new BigDecimal(3));
+                log.info("Rate subtracted because of gender and age -3. Current rate - " + rate);
             }
         } else if (scoringDataDto.getGender().equals(MALE)) {
-            if (age < 30 || age > 55)
+            if (age < 30 || age > 55) {
                 rate = rate.subtract(new BigDecimal(3));
+                log.info("Rate subtracted because of gender and age -3. Current rate - " + rate);
+            }
         } else {
             rate = rate.add(new BigDecimal(7));
+            log.info("Rate added because of gender and age +7. Current rate - " + rate);
         }
         //Возвращаем сформированную добавочную ставку
         return rate;
@@ -163,9 +183,12 @@ public class ScoringService {
     public BigDecimal calculateMonthlyPayment(BigDecimal amount, BigDecimal rate, Integer term) {
         //Локальная переменная с суммой кредита
         BigDecimal monthlyPayment = amount;
+        //Ежемесячная ставка по кредиту
         BigDecimal monthlyRate = rate.divide(new BigDecimal(12), 20, RoundingMode.HALF_EVEN)
                 .divide(new BigDecimal(100), 20, RoundingMode.HALF_EVEN);
+        //Числитель
         BigDecimal numerator = monthlyRate.multiply(monthlyRate.add(new BigDecimal(1)).pow(term));
+        //Знаменатель
         BigDecimal denominator = monthlyRate.add(new BigDecimal(1)).pow(term);
         denominator = denominator.subtract(new BigDecimal(1));
         BigDecimal multiplier = numerator.divide(denominator, 20, RoundingMode.HALF_EVEN);

@@ -2,6 +2,7 @@ package com.example.calculator.service;
 
 import com.example.calculator.dto.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CalculatorService {
     private final ScoringService scoringService;
 
@@ -41,10 +43,13 @@ public class CalculatorService {
                                      boolean isSalaryClient) {
         //Считаем предлагаемую сумму, учитывая взятие страховки и статус "зарплатного клиента"
         BigDecimal totalAmount = scoringService.calculateTotalAmount(requestDto.getAmount(), isInsuranceEnable, isSalaryClient);
+        log.info("Total amount calculated for offer: " + totalAmount);
         //Считаем ставку банка, учитывая взятие страховки и статус "зарплатного клиента"
         BigDecimal rate = scoringService.calculateRate(isInsuranceEnable, isSalaryClient);
+        log.info("Rate calculated for offer: " + rate);
         //Считаем ежемесячный платёж с учётом суммы, ставки банка и срока кредитования
         BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, requestDto.getTerm());
+        log.info("Monthly payment for offer calculated: " + monthlyPayment);
         //Возвращаем сформированное предложение по кредиту
         return new LoanOfferDto(
                 requestDto.getAmount(),
@@ -68,15 +73,20 @@ public class CalculatorService {
         BigDecimal totalAmount = scoringService.calculateTotalAmount(scoringDataDto.getAmount(),
                 scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient());
+        log.info("Total amount calculated for credit: " + totalAmount);
         //Считаем банковскую ставку с учётом взятия страховки и статуса "зарплатного клиента"
         BigDecimal rate = scoringService.calculateRate(scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient());
+        log.info("Rate calculated for credit: " + rate);
         //Добавляем к ставке добавочную ставку, расчитанную в скоринге
         rate = rate.add(scoredRate);
+        log.info("Rate from scoring added to rate : " + rate);
         //Считаем ежемесячный платёж клиента по аннуитентному типу платежей
         BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, scoringDataDto.getTerm());
+        log.info("Monthly payment calculated for credit: " + monthlyPayment);
         //Считаем полную стоимость кредита
         BigDecimal psk = scoringService.calculatePSK(monthlyPayment, scoringDataDto.getTerm());
+        log.info("PSK calculated for credit: " + psk);
         //Формируем кредитное предложение
         return new CreditDto(totalAmount,
                 scoringDataDto.getTerm(),
@@ -121,6 +131,7 @@ public class CalculatorService {
         //Устанавливаем дату платежа
         LocalDate today = LocalDate.now();
         paymentScheduleElementDto.setDate(today.plusMonths(number - 1));
+        log.info("New payment added in schedule" + paymentScheduleElementDto);
         //Создаём лист платежей для записи в него
         List<PaymentScheduleElementDto> paymentSchedule;
         //Пока у нас есть долг по кредиту - уходим в рекурсию с остатком по платежу. Иначе - формируем список с последним платежом

@@ -8,6 +8,7 @@ import com.example.calculator.service.CalculatorService;
 import com.example.calculator.service.ScoringService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping("/calculator")
 @Validated
+@Slf4j
 public class CalculatorController {
     //Service for api logic
     private final CalculatorService calculatorService;
@@ -40,6 +42,7 @@ public class CalculatorController {
         if (scoringService.prescore(loanStatementRequestDto)) {
             return calculatorService.generateOffers(loanStatementRequestDto);
         } else {
+            log.error("Dto can't pass prescore");
             return List.of();
         }
     }
@@ -56,6 +59,7 @@ public class CalculatorController {
             BigDecimal scoreRate = scoringService.score(scoringDataDto);
             return calculatorService.createCredit(scoringDataDto, scoreRate);
         } catch (IllegalArgumentException iae) {
+            log.error("Scoring couldn't passed because of " + iae.getMessage());
             return new CreditDto();
         }
     }
@@ -74,6 +78,7 @@ public class CalculatorController {
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
+            log.error("Validation error. In field " + fieldName + " with message: " + errorMessage);
             errors.put(fieldName, errorMessage);
         });
         return errors;
