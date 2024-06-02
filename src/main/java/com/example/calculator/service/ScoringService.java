@@ -21,6 +21,7 @@ public class ScoringService {
 
     /**
      * Method for prescoring request dto according to certain rules
+     *
      * @param requestDto - requested dto. Contains information about client
      * @return true, if prescore success, or false, if one of dto fields is uncorrected
      */
@@ -59,12 +60,13 @@ public class ScoringService {
 
     /**
      * Method for scoring request dto according to certain rules
+     *
      * @param scoringDataDto - requested dto. Contains scoring information
      * @return adding rate for credit if all right. Otherwise, it throws Illegal Argument Exception
      */
-    public BigDecimal score(ScoringDataDto scoringDataDto){
+    public BigDecimal score(ScoringDataDto scoringDataDto) {
         BigDecimal rate = new BigDecimal(0);
-        if (scoringDataDto.getEmployment().getSalary().multiply(new BigDecimal(25)).compareTo(scoringDataDto.getAmount()) < 0){
+        if (scoringDataDto.getEmployment().getSalary().multiply(new BigDecimal(25)).compareTo(scoringDataDto.getAmount()) < 0) {
             throw new IllegalArgumentException("You can't take more money then your 25 salaries");
         }
         if (scoringDataDto.getEmployment().getWorkExperienceTotal() < 18)
@@ -97,7 +99,7 @@ public class ScoringService {
         if (age < 20 || age > 65) {
             throw new IllegalArgumentException("Your age must be more then 20");
         }
-        if (scoringDataDto.getGender().equals(FEMALE)){
+        if (scoringDataDto.getGender().equals(FEMALE)) {
             if (age < 32 || age > 60) {
                 rate = rate.subtract(new BigDecimal(3));
             }
@@ -112,6 +114,7 @@ public class ScoringService {
 
     /**
      * Method for calculating amount of money, which bank ready to give a client
+     *
      * @param amount             - required amount
      * @param isInsuranceEnabled - include insurance in amount or not
      * @param isSalaryClient     - if client has status "salary client", he doesn't need to pay for insurance
@@ -126,6 +129,7 @@ public class ScoringService {
 
     /**
      * Method for calculating bank rate, using based rate
+     *
      * @param isInsuranceEnabled - include insurance in credit or not
      * @param isSalaryClient     - client has status "salary client" or not
      * @return current bank rate
@@ -143,6 +147,7 @@ public class ScoringService {
 
     /**
      * Method for calculating credit montly payment
+     *
      * @param amount - total amount of credit money
      * @param rate   - bank rate
      * @param term   - term of credit
@@ -156,12 +161,13 @@ public class ScoringService {
         return monthlyPayment.setScale(2, RoundingMode.HALF_EVEN);
     }
 
-    public BigDecimal calculatePSK(BigDecimal monthlyPayment, Integer term){
+    public BigDecimal calculatePSK(BigDecimal monthlyPayment, Integer term) {
         return monthlyPayment.multiply(new BigDecimal(term));
     }
 
     /**
      * Method for checking string on letters
+     *
      * @param word - checking word
      * @return true, if word contains only letters, or false, if not
      */

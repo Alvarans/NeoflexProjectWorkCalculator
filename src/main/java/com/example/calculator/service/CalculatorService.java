@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -16,6 +15,7 @@ public class CalculatorService {
 
     /**
      * Method generate all kind of credit offers
+     *
      * @param requestDto - request with information about client
      * @return List of offers
      */
@@ -28,9 +28,10 @@ public class CalculatorService {
 
     /**
      * Method creating credit offer
-     * @param requestDto - dto contained information about client
+     *
+     * @param requestDto        - dto contained information about client
      * @param isInsuranceEnable - true, if client takes insurance
-     * @param isSalaryClient - true, if client have a salary client status
+     * @param isSalaryClient    - true, if client have a salary client status
      * @return dto with credit offer
      */
     private LoanOfferDto createOffer(LoanStatementRequestDto requestDto,
@@ -53,14 +54,14 @@ public class CalculatorService {
                 isSalaryClient);
     }
 
-    public CreditDto createCredit(ScoringDataDto scoringDataDto, BigDecimal scoredRate){
+    public CreditDto createCredit(ScoringDataDto scoringDataDto, BigDecimal scoredRate) {
         BigDecimal totalAmount = scoringService.calculateTotalAmount(scoringDataDto.getAmount(),
                 scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient());
         BigDecimal rate = scoringService.calculateRate(scoringDataDto.getIsInsuranceEnabled(),
                 scoringDataDto.getIsSalaryClient());
         rate = rate.add(scoredRate);
-        BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount,rate, scoringDataDto.getTerm());
+        BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, scoringDataDto.getTerm());
         BigDecimal psk = scoringService.calculatePSK(monthlyPayment, scoringDataDto.getTerm());
         return new CreditDto(totalAmount,
                 scoringDataDto.getTerm(),
@@ -73,8 +74,8 @@ public class CalculatorService {
     }
 
     private List<PaymentScheduleElementDto> createPaymentSchedule(Integer number, BigDecimal amount,
-                                                                        BigDecimal rate,
-                                                                        BigDecimal monthlyPayment){
+                                                                  BigDecimal rate,
+                                                                  BigDecimal monthlyPayment) {
         PaymentScheduleElementDto paymentScheduleElementDto = new PaymentScheduleElementDto();
         paymentScheduleElementDto.setNumber(number);
         paymentScheduleElementDto.setTotalPayment(amount);
@@ -88,9 +89,9 @@ public class CalculatorService {
         paymentScheduleElementDto.setDebtPayment(debtPayment.setScale(2, RoundingMode.HALF_EVEN));
         paymentScheduleElementDto.setRemainingDebt(remainingDebt.setScale(2, RoundingMode.HALF_EVEN));
         List<PaymentScheduleElementDto> paymentSchedule;
-        if(newAmount.compareTo(BigDecimal.ZERO) != 0){
+        if (newAmount.compareTo(BigDecimal.ZERO) != 0) {
             paymentSchedule = createPaymentSchedule(++number, newAmount, rate, monthlyPayment);
-            paymentSchedule.add(--number,paymentScheduleElementDto);
+            paymentSchedule.add(--number, paymentScheduleElementDto);
         } else {
             return List.of(paymentScheduleElementDto);
         }
