@@ -4,12 +4,10 @@ import com.example.calculator.enums.GendersEnum;
 import com.example.calculator.enums.MaritalStatusEnum;
 import com.example.calculator.utils.ValidBirthDate;
 import com.fasterxml.jackson.annotation.JsonValue;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,7 +17,7 @@ public class ScoringDataDto {
     @Min(30000)
     private BigDecimal amount;
     private Integer term;
-    @Size(max = 30,min = 2)
+    @Size(max = 30, min = 2)
     private String firstName;
     @Size(max = 30, min = 2)
     private String lastName;
