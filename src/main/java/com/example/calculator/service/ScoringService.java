@@ -19,7 +19,7 @@ import static com.example.calculator.enums.PositionsEnum.*;
 @Service
 @Slf4j
 public class ScoringService {
-    //final BigDecimal baseRate = new BigDecimal("16.00");
+    final BigDecimal baseRate = new BigDecimal("16.00");
 
     /**
      * Method for prescoring request dto according to certain rules
@@ -122,12 +122,12 @@ public class ScoringService {
         }
         //Увеличение и уменьшение ставки на основе идентификации и возраста клиента
         if (scoringDataDto.getGender().equals(FEMALE)) {
-            if (age < 32 || age > 60) {
+            if (age > 32 && age < 60) {
                 rate = rate.subtract(new BigDecimal(3));
                 log.info("Rate subtracted because of gender and age -3. Current rate - " + rate);
             }
         } else if (scoringDataDto.getGender().equals(MALE)) {
-            if (age < 30 || age > 55) {
+            if (age > 30 && age < 55) {
                 rate = rate.subtract(new BigDecimal(3));
                 log.info("Rate subtracted because of gender and age -3. Current rate - " + rate);
             }
@@ -162,7 +162,7 @@ public class ScoringService {
      * @return current bank rate
      */
     public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
-        BigDecimal totalRate = new BigDecimal(16);
+        BigDecimal totalRate = baseRate;
         if (isInsuranceEnabled) {
             totalRate = totalRate.subtract(new BigDecimal("3.00"));
             if (isSalaryClient) {
