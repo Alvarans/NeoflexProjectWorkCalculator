@@ -29,11 +29,20 @@ class ScoringServiceTest {
         loanStatementRequestDto.setMiddleName("a");
         boolean prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
         assertFalse(prescoreFalseResult);
-
         loanStatementRequestDto.setFirstName("boris");
+        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
+        assertFalse(prescoreFalseResult);
         loanStatementRequestDto.setLastName("britva");
+        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
+        assertFalse(prescoreFalseResult);
+        loanStatementRequestDto.setMiddleName("348");
+        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
+        assertFalse(prescoreFalseResult);
         loanStatementRequestDto.setMiddleName(null);
-        loanStatementRequestDto.setBirthdate(LocalDate.parse("2001-07-30"));
+        loanStatementRequestDto.setBirthdate(LocalDate.of(2017,7,30));
+        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
+        assertFalse(prescoreFalseResult);
+        loanStatementRequestDto.setBirthdate(LocalDate.of(2001,7,30));
         boolean rescoreCurrectResult = scoringService.prescore(loanStatementRequestDto);
         assertTrue(rescoreCurrectResult);
     }
@@ -50,7 +59,7 @@ class ScoringServiceTest {
         scoringDataDto.getEmployment().setPosition(PositionsEnum.SENIORSTAFF);
         scoringDataDto.setMaritalStatus(MaritalStatusEnum.WIDOWED);
         scoringDataDto.setGender(GendersEnum.MALE);
-        scoringDataDto.setBirthdate(LocalDate.parse("2001-07-30"));
+        scoringDataDto.setBirthdate(LocalDate.of(2001,7,30));
         assertThrows(IllegalArgumentException.class, () -> scoringService.score(scoringDataDto));
         scoringDataDto.getEmployment().setEmploymentStatus(EmploymentStatusEnum.EMPLOYEE);
         assertThrows(IllegalArgumentException.class, () -> scoringService.score(scoringDataDto));
