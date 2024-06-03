@@ -19,7 +19,7 @@ import static com.example.calculator.enums.PositionsEnum.*;
 @Service
 @Slf4j
 public class ScoringService {
-    final BigDecimal baseRate = new BigDecimal("16.00");
+    //final BigDecimal baseRate = new BigDecimal("16.00");
 
     /**
      * Method for prescoring request dto according to certain rules
@@ -162,7 +162,7 @@ public class ScoringService {
      * @return current bank rate
      */
     public BigDecimal calculateRate(boolean isInsuranceEnabled, boolean isSalaryClient) {
-        BigDecimal totalRate = baseRate;
+        BigDecimal totalRate = new BigDecimal(16);
         if (isInsuranceEnabled) {
             totalRate = totalRate.subtract(new BigDecimal("3.00"));
             if (isSalaryClient) {

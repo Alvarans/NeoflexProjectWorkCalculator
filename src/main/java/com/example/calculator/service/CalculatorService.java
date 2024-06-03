@@ -55,7 +55,7 @@ public class CalculatorService {
                 requestDto.getAmount(),
                 totalAmount,
                 requestDto.getTerm(),
-                monthlyPayment.setScale(2, RoundingMode.HALF_EVEN),
+                monthlyPayment==null?null:monthlyPayment.setScale(2, RoundingMode.HALF_EVEN),
                 rate,
                 isInsuranceEnable,
                 isSalaryClient);

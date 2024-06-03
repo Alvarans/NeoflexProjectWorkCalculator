@@ -2,7 +2,6 @@ package com.example.calculator.dto;
 
 import com.example.calculator.enums.GendersEnum;
 import com.example.calculator.enums.MaritalStatusEnum;
-import com.example.calculator.utils.ValidBirthDate;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -25,7 +24,6 @@ public class ScoringDataDto {
     @JsonValue
     private GendersEnum gender;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @ValidBirthDate
     private LocalDate birthdate;
     @Size(min = 4, max = 4)
     private String passportSeries;
@@ -59,5 +57,8 @@ public class ScoringDataDto {
         this.accountNumber = accountNumber;
         this.isInsuranceEnabled = isInsuranceEnabled;
         this.isSalaryClient = isSalaryClient;
+    }
+
+    public ScoringDataDto() {
     }
 }
