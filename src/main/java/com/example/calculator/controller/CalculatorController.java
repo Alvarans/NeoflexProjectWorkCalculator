@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,12 +40,14 @@ public class CalculatorController {
      */
     @PostMapping("/offers")
     List<LoanOfferDto> creditOffers(@Validated @RequestBody LoanStatementRequestDto loanStatementRequestDto) {
-        if (scoringService.prescore(loanStatementRequestDto)) {
-            return calculatorService.generateOffers(loanStatementRequestDto);
-        } else {
+        try {
+            scoringService.prescore(loanStatementRequestDto);
+        } catch (IllegalArgumentException iae){
             log.error("Dto can't pass prescore");
+            log.error(iae.getMessage());
             return List.of();
         }
+            return calculatorService.generateOffers(loanStatementRequestDto);
     }
 
     /**
@@ -54,33 +57,16 @@ public class CalculatorController {
      * @return filled credit offer with monthly payment schedule. If request information can't pass score - return empty credit offer
      */
     @PostMapping("/calc")
-    CreditDto creditCalculation(@Valid @RequestBody ScoringDataDto scoringDataDto) {
+    ResponseEntity<CreditDto> creditCalculation(@Valid @RequestBody ScoringDataDto scoringDataDto) {
+        BigDecimal scoreRate;
         try {
-            BigDecimal scoreRate = scoringService.score(scoringDataDto);
-            return calculatorService.createCredit(scoringDataDto, scoreRate);
+            scoreRate = scoringService.score(scoringDataDto);
         } catch (IllegalArgumentException iae) {
             log.error("Scoring couldn't passed because of " + iae.getMessage());
-            return new CreditDto();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CreditDto());
         }
+        return ResponseEntity.ok(calculatorService.createCredit(scoringDataDto, scoreRate));
     }
 
-    /**
-     * Method, who handle ArgumentNotValidException exception
-     *
-     * @param ex - body of exception
-     * @return map of errors, contains naming of field, failed validation, and default message
-     */
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            log.error("Validation error. In field " + fieldName + " with message: " + errorMessage);
-            errors.put(fieldName, errorMessage);
-        });
-        return errors;
-    }
+
 }

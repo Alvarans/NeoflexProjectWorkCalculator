@@ -27,24 +27,17 @@ class ScoringServiceTest {
         loanStatementRequestDto.setFirstName("12345");
         loanStatementRequestDto.setLastName("12345");
         loanStatementRequestDto.setMiddleName("a");
-        boolean prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
-        assertFalse(prescoreFalseResult);
+        assertThrows(IllegalArgumentException.class, () -> scoringService.prescore(loanStatementRequestDto));
         loanStatementRequestDto.setFirstName("boris");
-        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
-        assertFalse(prescoreFalseResult);
+        assertThrows(IllegalArgumentException.class, () -> scoringService.prescore(loanStatementRequestDto));
         loanStatementRequestDto.setLastName("britva");
-        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
-        assertFalse(prescoreFalseResult);
+        assertThrows(IllegalArgumentException.class, () -> scoringService.prescore(loanStatementRequestDto));
         loanStatementRequestDto.setMiddleName("348");
-        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
-        assertFalse(prescoreFalseResult);
+        assertThrows(IllegalArgumentException.class, () -> scoringService.prescore(loanStatementRequestDto));
         loanStatementRequestDto.setMiddleName(null);
         loanStatementRequestDto.setBirthdate(LocalDate.of(2017,7,30));
-        prescoreFalseResult = scoringService.prescore(loanStatementRequestDto);
-        assertFalse(prescoreFalseResult);
+        assertThrows(IllegalArgumentException.class, () -> scoringService.prescore(loanStatementRequestDto));
         loanStatementRequestDto.setBirthdate(LocalDate.of(2001,7,30));
-        boolean rescoreCurrectResult = scoringService.prescore(loanStatementRequestDto);
-        assertTrue(rescoreCurrectResult);
     }
 
     @Test

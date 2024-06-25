@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 public enum EmploymentStatusEnum {
-    @JsonProperty BUSINESSOWNER,
-    @JsonProperty EMPLOYEE,
-    @JsonProperty UNEMPLOYED,
-    @JsonProperty SELF_EMPLOYEE;
+    BUSINESSOWNER,
+    EMPLOYEE,
+    UNEMPLOYED,
+    SELF_EMPLOYEE;
 
     EmploymentStatusEnum() {
     }

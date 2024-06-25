@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -24,10 +26,13 @@ public class CalculatorService {
      * @return List of offers
      */
     public List<LoanOfferDto> generateOffers(LoanStatementRequestDto requestDto) {
-        return List.of(createOffer(requestDto, false, false),
+        List<LoanOfferDto> offers = new ArrayList<>(List.of(createOffer(requestDto, false, false),
                 createOffer(requestDto, false, true),
                 createOffer(requestDto, true, false),
-                createOffer(requestDto, true, true));
+                createOffer(requestDto, true, true)));
+        offers.sort(Comparator.comparing(LoanOfferDto::getRate));
+        Collections.reverse(offers);
+        return offers;
     }
 
     /**
@@ -47,8 +52,13 @@ public class CalculatorService {
         //Считаем ставку банка, учитывая взятие страховки и статус "зарплатного клиента"
         BigDecimal rate = scoringService.calculateRate(isInsuranceEnable, isSalaryClient);
         log.info("Rate calculated for offer: " + rate);
+        BigDecimal monthlyPayment;
         //Считаем ежемесячный платёж с учётом суммы, ставки банка и срока кредитования
-        BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, requestDto.getTerm());
+        try {
+            monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, requestDto.getTerm());
+        } catch (ArithmeticException ae){
+            throw new ArithmeticException("can't create offer because of dividing by zero");
+        }
         log.info("Monthly payment for offer calculated: " + monthlyPayment);
         //Возвращаем сформированное предложение по кредиту
         return new LoanOfferDto(
@@ -82,7 +92,12 @@ public class CalculatorService {
         rate = rate.add(scoredRate);
         log.info("Rate from scoring added to rate : " + rate);
         //Считаем ежемесячный платёж клиента по аннуитентному типу платежей
-        BigDecimal monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, scoringDataDto.getTerm());
+        BigDecimal monthlyPayment;
+        try {
+            monthlyPayment = scoringService.calculateMonthlyPayment(totalAmount, rate, scoringDataDto.getTerm());
+        } catch (ArithmeticException ae){
+            throw new ArithmeticException("can't calculate monthlyPayment because of divide by zero");
+        }
         log.info("Monthly payment calculated for credit: " + monthlyPayment);
         //Считаем полную стоимость кредита
         BigDecimal psk = scoringService.calculatePSK(monthlyPayment, scoringDataDto.getTerm());
@@ -142,6 +157,7 @@ public class CalculatorService {
             return new ArrayList<>(List.of(paymentScheduleElementDto));
         }
         //Возвращаем сформированный график платежей
+        Collections.reverse(paymentSchedule);
         return paymentSchedule;
     }
 }

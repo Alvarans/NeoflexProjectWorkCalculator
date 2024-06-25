@@ -3,6 +3,7 @@ package com.example.calculator.service;
 import com.example.calculator.dto.LoanStatementRequestDto;
 import com.example.calculator.dto.ScoringDataDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,37 +28,36 @@ public class ScoringService {
      * @param requestDto - requested dto. Contains information about client
      * @return true, if prescore success, or false, if one of dto fields is uncorrected
      */
-    public boolean prescore(LoanStatementRequestDto requestDto) {
+    public void prescore(LoanStatementRequestDto requestDto) {
         //Проверка на то, состоит ли имя из латинских символов или нет
         if (!(isLatina(requestDto.getFirstName()))) {
             log.error("You must use letters in first name");
-            return false;
+            throw new IllegalArgumentException("You must use letters in first name");
         }
         //Проверка на то, состоит ли фамилия из латинских символов или нет
         if (!(isLatina(requestDto.getLastName()))) {
             log.error("You must use letters in last name");
-            return false;
+            throw new IllegalArgumentException("You must use letters in last name");
         }
         String middleName = requestDto.getMiddleName();
         //Проверка отчества на длину и содержание латинских букв при его наличии
         if (middleName != null) {
             if ((middleName.length() < 2) || (middleName.length() > 30)) {
-                log.error("Your middlename is uncorrect");
-                return false;
+                log.error("Your middlename is uncorrect lenght");
+                throw new IllegalArgumentException("Your middlename is uncorrect lenght");
             }
             if (!(isLatina(requestDto.getMiddleName()))) {
                 log.error("You must use letters in middle name");
-                return false;
+                throw new IllegalArgumentException("You must use letters in middle name");
             }
         }
         //Проверка клиента на совершеннолетие
         if (Period.between(requestDto.getBirthdate(), LocalDate.now())
                 .getYears() < 18) {
             log.error("Your age must be more then 18");
-            return false;
+            throw new IllegalArgumentException("You must use letters in middle name");
         }
         log.info("Prescore success");
-        return true;
     }
 
     /**
@@ -150,7 +150,8 @@ public class ScoringService {
     public BigDecimal calculateTotalAmount(BigDecimal amount,
                                            boolean isInsuranceEnabled,
                                            boolean isSalaryClient) {
-
+        if (amount == null)
+            amount = BigDecimal.ZERO;
         return isInsuranceEnabled & (!isSalaryClient) ? amount.add(new BigDecimal("100000")) : amount;
     }
 
@@ -191,6 +192,9 @@ public class ScoringService {
         //Знаменатель
         BigDecimal denominator = monthlyRate.add(new BigDecimal(1)).pow(term);
         denominator = denominator.subtract(new BigDecimal(1));
+        if (denominator.compareTo(BigDecimal.ZERO) == 0){
+            throw new ArithmeticException("Denominator is 0");
+        }
         BigDecimal multiplier = numerator.divide(denominator, 20, RoundingMode.HALF_EVEN);
         monthlyPayment = monthlyPayment.multiply(multiplier);
         return monthlyPayment;
