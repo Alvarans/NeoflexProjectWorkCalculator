@@ -6,6 +6,7 @@ import com.example.calculator.dto.LoanStatementRequestDto;
 import com.example.calculator.dto.ScoringDataDto;
 import com.example.calculator.service.CalculatorService;
 import com.example.calculator.service.ScoringService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,8 @@ import java.util.Map;
 @RequestMapping("/calculator")
 @Validated
 @Slf4j
-public class CalculatorController {
+@Tag(name = "Credit controller", description = "Контроллер для вычисления кредитных предложений")
+public class CalculatorController implements ApiController {
     //Service for api logic
     private final CalculatorService calculatorService;
     //Service for prescoring and scoring data
@@ -39,7 +41,7 @@ public class CalculatorController {
      * @return list of credit offers. If information about client can't pass prescore - return empty list
      */
     @PostMapping("/offers")
-    List<LoanOfferDto> creditOffers(@Validated @RequestBody LoanStatementRequestDto loanStatementRequestDto) {
+    public List<LoanOfferDto> creditOffers(@Validated @RequestBody LoanStatementRequestDto loanStatementRequestDto) {
         try {
             scoringService.prescore(loanStatementRequestDto);
         } catch (IllegalArgumentException iae){
@@ -57,7 +59,7 @@ public class CalculatorController {
      * @return filled credit offer with monthly payment schedule. If request information can't pass score - return empty credit offer
      */
     @PostMapping("/calc")
-    ResponseEntity<CreditDto> creditCalculation(@Valid @RequestBody ScoringDataDto scoringDataDto) {
+    public ResponseEntity<CreditDto> creditCalculation(@Valid @RequestBody ScoringDataDto scoringDataDto) {
         BigDecimal scoreRate;
         try {
             scoreRate = scoringService.score(scoringDataDto);
