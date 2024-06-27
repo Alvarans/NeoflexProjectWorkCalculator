@@ -2,9 +2,7 @@ package com.example.calculator.dto;
 
 import com.example.calculator.utils.ValidBirthDate;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -19,6 +17,7 @@ public class LoanStatementRequestDto {
             type = "BigDecimal",
             example = "300000.00")
     @Min(30000)
+    @NotNull(message = "amount can't be null")
     private BigDecimal amount;
     @Schema(
             description = "term of credit",
@@ -26,6 +25,7 @@ public class LoanStatementRequestDto {
             type = "Integer",
             example = "48")
     @Min(6)
+    @NotNull(message = "term can't be null")
     private Integer term;
     @Schema(
             description = "client first name",
@@ -33,6 +33,7 @@ public class LoanStatementRequestDto {
             type = "String",
             example = "Boris")
     @Size(max = 30,min = 2)
+    @NotBlank(message = "First name may not be empty or null")
     private String firstName;
     @Schema(
             description = "client last name",
@@ -40,12 +41,14 @@ public class LoanStatementRequestDto {
             type = "String",
             example = "Britva")
     @Size(max = 30, min = 2)
+    @NotBlank(message = "Last name may not be empty or null")
     private String lastName;
     @Schema(
             description = "client middle name",
             name = "middleName",
             type = "String",
             example = "Valentinovich")
+    @NotEmpty(message = "Middle name may not be empty or null")
     private String middleName;
     @Schema(
             description = "client email",
@@ -53,6 +56,7 @@ public class LoanStatementRequestDto {
             type = "String",
             example = "email@mail.ru")
     @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+    @NotEmpty(message = "Email can't be empty")
     private String email;
     @Schema(
             description = "client birthdate",
@@ -60,6 +64,7 @@ public class LoanStatementRequestDto {
             type = "LocalDate",
             example = "2001-01-01")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @NotNull(message = "birthdate can't be null")
     //@ValidBirthDate  - Альтернативный способ проверки на совершеннолетие
     private LocalDate birthdate;
     @Schema(
@@ -68,12 +73,14 @@ public class LoanStatementRequestDto {
             type = "String",
             example = "1234")
     @Size(min = 4, max = 4)
+    @NotEmpty(message = "passport series can't be null")
     private String passportSeries;
     @Schema(
             description = "client passport number",
             name = "passportNumber",
             type = "String",
-            example = "true")
+            example = "123456")
     @Size(min = 6, max = 6)
+    @NotEmpty(message = "passport number can't be null")
     private String passportNumber;
 }

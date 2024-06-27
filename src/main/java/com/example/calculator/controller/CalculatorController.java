@@ -40,16 +40,11 @@ public class CalculatorController implements ApiController {
      * @param loanStatementRequestDto - information about client
      * @return list of credit offers. If information about client can't pass prescore - return empty list
      */
+    @Override
     @PostMapping("/offers")
     public List<LoanOfferDto> creditOffers(@Validated @RequestBody LoanStatementRequestDto loanStatementRequestDto) {
-        try {
-            scoringService.prescore(loanStatementRequestDto);
-        } catch (IllegalArgumentException iae){
-            log.error("Dto can't pass prescore");
-            log.error(iae.getMessage());
-            return List.of();
-        }
-            return calculatorService.generateOffers(loanStatementRequestDto);
+        scoringService.prescore(loanStatementRequestDto);
+        return calculatorService.generateOffers(loanStatementRequestDto);
     }
 
     /**
@@ -58,8 +53,9 @@ public class CalculatorController implements ApiController {
      * @param scoringDataDto - information about client and requested credit
      * @return filled credit offer with monthly payment schedule. If request information can't pass score - return empty credit offer
      */
+    @Override
     @PostMapping("/calc")
-    public ResponseEntity<CreditDto> creditCalculation(@Valid @RequestBody ScoringDataDto scoringDataDto) {
+    public ResponseEntity<CreditDto> creditCalculation(@Validated @RequestBody ScoringDataDto scoringDataDto) {
         BigDecimal scoreRate;
         try {
             scoreRate = scoringService.score(scoringDataDto);

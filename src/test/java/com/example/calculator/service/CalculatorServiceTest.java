@@ -59,18 +59,18 @@ class CalculatorServiceTest {
 
         assertEquals(totalAmountWithoutInsur, loanOfferDtoList.get(0).getTotalAmount());
         assertEquals(totalAmountWithoutInsur, loanOfferDtoList.get(1).getTotalAmount());
-        assertEquals(totalAmountWithInsur, loanOfferDtoList.get(2).getTotalAmount());
-        assertEquals(totalAmountWithoutInsur, loanOfferDtoList.get(3).getTotalAmount());
+        assertEquals(totalAmountWithoutInsur, loanOfferDtoList.get(2).getTotalAmount());
+        assertEquals(totalAmountWithInsur, loanOfferDtoList.get(3).getTotalAmount());
 
         assertEquals(baseRate, loanOfferDtoList.get(0).getRate());
         assertEquals(baseRate, loanOfferDtoList.get(1).getRate());
-        assertEquals(smallRate, loanOfferDtoList.get(2).getRate());
-        assertEquals(averageRate, loanOfferDtoList.get(3).getRate());
+        assertEquals(averageRate, loanOfferDtoList.get(2).getRate());
+        assertEquals(smallRate, loanOfferDtoList.get(3).getRate());
 
         assertEquals(firstMonthyPayment, loanOfferDtoList.get(0).getMonthlyPayment());
         assertEquals(firstMonthyPayment, loanOfferDtoList.get(1).getMonthlyPayment());
-        assertEquals(thirdMonthyPayment, loanOfferDtoList.get(2).getMonthlyPayment());
-        assertEquals(secondMonthyPayment, loanOfferDtoList.get(3).getMonthlyPayment());
+        assertEquals(secondMonthyPayment, loanOfferDtoList.get(2).getMonthlyPayment());
+        assertEquals(thirdMonthyPayment, loanOfferDtoList.get(3).getMonthlyPayment());
 
     }
 

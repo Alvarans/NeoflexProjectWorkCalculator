@@ -1,4 +1,4 @@
-package com.example.calculator.utils;
+package com.example.calculator.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +28,15 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(ArithmeticException.class)
     public ResponseEntity<String> divideByZero(ArithmeticException ex, WebRequest request) {
         logger.error("Arithmetic exception handled: " + ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> illegalArgument(IllegalArgumentException iae, WebRequest request){
+        logger.error("Illegal argument exception handled: " + iae.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(iae.getMessage());
+    }
     /**
      * Method, who handle ArgumentNotValidException exception
      *

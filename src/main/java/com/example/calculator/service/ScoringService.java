@@ -55,7 +55,7 @@ public class ScoringService {
         if (Period.between(requestDto.getBirthdate(), LocalDate.now())
                 .getYears() < 18) {
             log.error("Your age must be more then 18");
-            throw new IllegalArgumentException("You must use letters in middle name");
+            throw new IllegalArgumentException("Your age must be more then 18");
         }
         log.info("Prescore success");
     }
